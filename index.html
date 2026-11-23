@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Рефераты по истории</title>
+<meta name="theme-color" content="#f4f5f7">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=PT+Serif:wght@700&family=PT+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* Layout: header, status counters, toolbar, table; edit mode adds finance tiles, extra columns and dialogs */
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --ink:#1c2230; --muted:#667085; --line:#dfe3ea;
+  --accent:#2b4c8c; --accent-soft:#e7edf8;
+  --green:#1f7a4d; --green-soft:#e3f4ea; --amber:#9a5b00; --amber-soft:#fdf0d9; --red:#b42318; --red-soft:#fde8e6;
+  --blue:#2b4c8c; --blue-soft:#e7edf8; --gray:#4b5565; --gray-soft:#eceef2; --purple:#6b3fa0; --purple-soft:#f1eafa;
+  --teal:#0f6e6e; --teal-soft:#e0f3f3; --pink:#a3266b; --pink-soft:#fbe7f1;
+  --font-display:"PT Serif", Georgia, serif; --font-body:"PT Sans", "Segoe UI", Arial, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#12151c; --surface:#1a1f29; --ink:#e7eaf0; --muted:#98a2b3; --line:#2c3341;
+    --accent:#8fb0ee; --accent-soft:#1f2a40;
+    --green:#6fd39c; --green-soft:#173326; --amber:#f0b65a; --amber-soft:#3a2b12; --red:#f2877d; --red-soft:#3d1c19;
+    --blue:#8fb0ee; --blue-soft:#1f2a40; --gray:#b4bcc8; --gray-soft:#2a303b; --purple:#c3a3ef; --purple-soft:#2e2340;
+    --teal:#6fd0d0; --teal-soft:#153333; --pink:#f08cc0; --pink-soft:#3b1a2c;
+    color-scheme:dark;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--font-body)}
+.wrap{max-width:1180px;margin:0 auto;padding:28px 16px 40px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font:700 30px/1.15 var(--font-display);margin:0;text-wrap:balance}
+.sub{color:var(--muted);margin:4px 0 0;font-size:14px}
+.badge-edit{display:none;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:13px;padding:5px 10px;border-radius:999px}
+body.edit .badge-edit{display:inline-flex}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:11px 14px;display:flex;flex-direction:column;gap:2px}
+.stat b{font-size:24px;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat span{color:var(--muted);font-size:13px}
+.stat.zero b{opacity:.45}
+.money{display:none;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+body.edit .money{display:grid}
+.money .stat{border-style:dashed}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.toolbar input[type=search]{flex:1 1 220px;min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+.toolbar select{padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:8px 14px}
+button:disabled{opacity:.5;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:700}
+button.danger{color:var(--red);border-color:var(--red)}
+button.small{padding:4px 9px;font-size:13px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.edit-only{display:none!important}
+body.edit .edit-only{display:revert!important}
+.table-box{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:680px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}
+th.sortable{cursor:pointer;user-select:none}
+tr:last-child td{border-bottom:0}
+td.num{font-variant-numeric:tabular-nums;color:var(--muted);width:44px}
+td.name{font-weight:700;white-space:nowrap}
+td.topic{max-width:420px}
+td.price,th.price{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td.price{font-weight:700}
+td.pnote{font-size:14px;color:var(--muted);max-width:200px}
+.pill,.sel{display:inline-block;padding:2px 10px;border-radius:999px;font-size:13px;font-weight:700;white-space:nowrap}
+.sel{font:inherit;font-size:13px;font-weight:700;border:1px solid transparent;cursor:pointer;padding:3px 8px}
+.c-green{background:var(--green-soft);color:var(--green)} .c-amber{background:var(--amber-soft);color:var(--amber)}
+.c-red{background:var(--red-soft);color:var(--red)} .c-blue{background:var(--blue-soft);color:var(--blue)}
+.c-gray{background:var(--gray-soft);color:var(--gray)} .c-purple{background:var(--purple-soft);color:var(--purple)}
+.c-teal{background:var(--teal-soft);color:var(--teal)} .c-pink{background:var(--pink-soft);color:var(--pink)}
+.t-green b{color:var(--green)} .t-amber b{color:var(--amber)} .t-red b{color:var(--red)} .t-blue b{color:var(--blue)}
+.t-gray b{color:var(--gray)} .t-purple b{color:var(--purple)} .t-teal b{color:var(--teal)} .t-pink b{color:var(--pink)}
+.empty,.note{color:var(--muted);text-align:center;padding:28px 14px}
+.note.warn{color:var(--amber)}
+body.edit tbody tr{cursor:pointer}
+body.edit tbody tr:hover{background:var(--accent-soft)}
+footer{display:flex;justify-content:center;padding-top:20px}
+.edit-link{background:none;border:0;padding:4px 8px;font-size:12px;color:var(--muted);opacity:.4}
+.edit-link:hover,.edit-link:focus-visible{opacity:.9}
+dialog{border:1px solid var(--line);border-radius:14px;padding:0;background:var(--surface);color:var(--ink);width:min(540px,calc(100% - 24px));max-height:calc(100% - 24px)}
+dialog::backdrop{background:rgba(10,14,22,.5)}
+dialog form,.dlg-body{display:flex;flex-direction:column;gap:14px;padding:22px}
+dialog h2{font:700 22px/1.2 var(--font-display);margin:0}
+.field{display:flex;flex-direction:column;gap:5px}
+.field label{font-size:13px;font-weight:700;color:var(--muted)}
+.field input,.field select,.field textarea{padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+.field textarea{min-height:72px;resize:vertical}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row2.narrow{grid-template-columns:90px 1fr}
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between}
+.actions .right{display:flex;gap:10px;margin-left:auto}
+.err{color:var(--red);font-size:14px;min-height:1em;margin:0}
+.st-list{display:flex;flex-direction:column;gap:8px}
+.st-item{display:grid;grid-template-columns:auto 1fr 110px auto;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:10px}
+.st-item input,.st-item select{padding:7px 9px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;min-width:0}
+.st-item .moves{display:flex;flex-direction:column;gap:2px}
+.st-item .moves button{padding:0 6px;font-size:11px;line-height:1.4}
+.st-item .btns{display:flex;gap:6px}
+.st-del{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px;background:var(--red-soft);padding:8px;border-radius:8px}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:10}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion: reduce){.toast{transition:none}}
+@media (max-width:560px){h1{font-size:24px}.row2,.row2.narrow{grid-template-columns:1fr}.st-item{grid-template-columns:auto 1fr}.st-item select,.st-item .btns{grid-column:2}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Рефераты по истории</h1>
+      <p class="sub">Кафедра истории государства и права · темы и статус проверки</p>
+    </div>
+    <span class="badge-edit">Редактирование таблицы</span>
+  </header>
+
+  <section class="stats" id="stats" aria-label="Сводка по статусам"></section>
+  <section class="money" id="money" aria-label="Деньги"></section>
+
+  <div class="toolbar">
+    <input type="search" id="q" placeholder="Поиск по ФИО или теме" aria-label="Поиск">
+    <select id="fStatus" aria-label="Фильтр по статусу"></select>
+    <select id="fPaid" aria-label="Фильтр по оплате">
+      <option value="">Любая оплата</option><option value="1">Оплачено</option><option value="0">Не оплачено</option>
+    </select>
+    <button class="primary edit-only" id="addBtn" type="button">+ Добавить</button>
+    <button class="edit-only" id="statusesBtn" type="button">Статусы</button>
+    <button class="edit-only" id="csvBtn" type="button">Скачать CSV</button>
+    <button class="edit-only" id="passBtn" type="button">Сменить пароль</button>
+  </div>
+
+  <div class="table-box">
+    <table>
+      <thead><tr>
+        <th class="sortable" id="thNum" title="Изменить порядок">№ ↓</th><th>ФИО</th><th>Статус</th><th>Оплата</th>
+        <th class="edit-only price">Цена, ₽</th><th class="edit-only">Примечание</th><th class="edit-only">Реферал</th><th>Тема</th>
+      </tr></thead>
+      <tbody id="tbody"><tr><td colspan="8" class="note">Загружаю список…</td></tr></tbody>
+    </table>
+  </div>
+  <p class="sub edit-only">Статус, оплата и реферал меняются прямо в таблице. Нажмите на строку, чтобы изменить остальное. Цену, примечание и реферала видите только вы, остальным у ФИО видна только *.</p>
+  <footer><button type="button" id="editToggle" class="edit-link">редактирование таблицы</button></footer>
+</div>
+
+<!-- Пароль -->
+<dialog id="dlgPass">
+  <form id="formPass">
+    <h2>Вход в редактирование</h2>
+    <div class="field"><label for="iPass">Пароль</label><input id="iPass" type="password" inputmode="numeric" autocomplete="current-password" required></div>
+    <p class="err" id="passErr"></p>
+    <div class="actions"><div class="right"><button type="button" data-close>Отмена</button><button type="submit" class="primary" id="passOk">Войти</button></div></div>
+  </form>
+</dialog>
+
+<!-- Строка -->
+<dialog id="dlgRow">
+  <form id="formRow">
+    <h2 id="rowTitle">Изменить запись</h2>
+    <div class="row2 narrow">
+      <div class="field"><label for="iNum">№</label><input id="iNum" type="number" min="1" required></div>
+      <div class="field"><label for="iName">ФИО</label><input id="iName" required placeholder="Иванов И. И."></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="iStatus">Статус</label><select id="iStatus"></select></div>
+      <div class="field"><label for="iPaid">Оплата (видно всем)</label><select id="iPaid"><option value="0">Не оплачено</option><option value="1">Оплачено</option></select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label for="iPrice">Цена, ₽</label><input id="iPrice" type="number" min="0" step="50" inputmode="numeric" placeholder="1500"></div>
+      <div class="field"><label for="iRef">Реферал</label><select id="iRef"><option value="0">Не реферал</option><option value="1">Реферал</option></select></div>
+    </div>
+    <div class="field"><label for="iNote">Примечание (видно только вам)</label><input id="iNote" placeholder="например: после зачета"></div>
+    <div class="field"><label for="iTopic">Тема</label><textarea id="iTopic" required></textarea></div>
+    <p class="err" id="rowErr"></p>
+    <div class="actions">
+      <button type="button" class="danger" id="delBtn">Удалить</button>
+      <div class="right"><button type="button" data-close>Отмена</button><button type="submit" class="primary" id="rowSave">Сохранить</button></div>
+    </div>
+  </form>
+</dialog>
+
+<!-- Статусы -->
+<dialog id="dlgSt">
+  <div class="dlg-body">
+    <h2>Статусы</h2>
+    <p class="sub" style="margin:0">Переименование меняет статус у всех записей. Порядок здесь задаёт порядок плашек и списков.</p>
+    <div class="st-list" id="stList"></div>
+    <div class="st-item" style="grid-template-columns:1fr 110px auto">
+      <input id="newStName" placeholder="Новый статус" aria-label="Название нового статуса">
+      <select id="newStColor" aria-label="Цвет нового статуса"></select>
+      <button class="primary small" id="newStAdd" type="button">Добавить</button>
+    </div>
+    <p class="err" id="stErr"></p>
+    <div class="actions"><div class="right"><button type="button" data-close>Готово</button></div></div>
+  </div>
+</dialog>
+
+<!-- Смена пароля -->
+<dialog id="dlgNewPass">
+  <form id="formNewPass">
+    <h2>Сменить пароль</h2>
+    <div class="field"><label for="iNewPass">Новый пароль</label><input id="iNewPass" type="password" autocomplete="new-password" minlength="3" required></div>
+    <div class="field"><label for="iNewPass2">Повторите</label><input id="iNewPass2" type="password" autocomplete="new-password" minlength="3" required></div>
+    <p class="err" id="npErr"></p>
+    <div class="actions"><div class="right"><button type="button" data-close>Отмена</button><button type="submit" class="primary">Сохранить</button></div></div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+  const SB_URL = 'https://cpdkkzkizftmuceydyqp.supabase.co';
+  const SB_KEY = 'sb_publishable_De1nR8_tXRlkV-7BQB17IA_JZ30nQAt';
+  const sb = supabase.createClient(SB_URL, SB_KEY, { auth: { persistSession:false, autoRefreshToken:false } });
+  const COLORS = [['green','Зелёный'],['amber','Жёлтый'],['red','Красный'],['blue','Синий'],['gray','Серый'],['purple','Фиолетовый'],['teal','Бирюзовый'],['pink','Розовый']];
+
+  const $ = s => document.querySelector(s);
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const fmt = n => (Number(n)||0).toLocaleString('ru-RU');
+  function toast(m){ const t=$('#toast'); t.textContent=m; t.classList.add('show'); clearTimeout(toast.t); toast.t=setTimeout(()=>t.classList.remove('show'),2200); }
+
+  let rows = [], statuses = [], priv = new Map();
+  let pass = null, edit = false, sortDesc = true, loaded = false;
+  try { pass = sessionStorage.getItem('refPass'); } catch(e){}
+
+  document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => b.closest('dialog').close()));
+
+  const stColor = name => (statuses.find(s => s.name === name) || {}).color || 'gray';
+  const stNames = () => statuses.map(s => s.name);
+
+  async function rpc(fn, args){
+    const { data, error } = await sb.rpc(fn, Object.assign({ p_pass: pass }, args||{}));
+    if (error){
+      if (/bad password/.test(error.message)){ leaveEdit(); toast('Пароль больше не подходит, войдите снова'); }
+      throw error;
+    }
+    return data;
+  }
+
+  async function loadPublic(){
+    const [r, s] = await Promise.all([
+      sb.from('ref_rows').select('id,num,name,status,topic,paid,referral'),
+      sb.from('ref_statuses').select('id,name,color,sort').order('sort').order('id')
+    ]);
+    if (r.error || s.error) throw (r.error || s.error);
+    rows = r.data; statuses = s.data; loaded = true;
+  }
+  async function loadPrivate(){
+    const d = await rpc('ref_private_list');
+    priv = new Map(d.map(x => [x.id, { price: x.price == null ? null : Number(x.price), note: x.note || '' }]));
+  }
+  async function reload(){
+    try { await loadPublic(); if (edit) await loadPrivate(); render(); }
+    catch(e){ if (!loaded) setNote('Не удалось загрузить список. Обновите страницу.', true); else toast('Не удалось обновить данные'); }
+  }
+
+  function setNote(t, warn){ const tb=$('#tbody'); tb.replaceChildren(); const tr=el('tr'), td=el('td','note'+(warn?' warn':''),t); td.colSpan=8; tr.appendChild(td); tb.appendChild(tr); }
+
+  function fillSelect(sel, items, value){
+    sel.replaceChildren();
+    for (const [v,t] of items){ const o = el('option', null, t); o.value = v; sel.appendChild(o); }
+    if (value != null) sel.value = value;
+  }
+  function statusOptions(cur){
+    const names = stNames();
+    const list = (cur && !names.includes(cur)) ? [cur, ...names] : names;
+    return list.map(n => [n, n]);
+  }
+
+  function inlineSelect(id, items, value, colorCls, label, onChange){
+    const s = el('select', 'sel ' + colorCls);
+    s.id = id; s.setAttribute('aria-label', label);
+    fillSelect(s, items, value);
+    s.addEventListener('click', e => e.stopPropagation());
+    s.addEventListener('keydown', e => e.stopPropagation());
+    s.addEventListener('change', async e => {
+      e.stopPropagation(); s.disabled = true;
+      try { await onChange(s.value); } catch(err){ toast('Не удалось сохранить'); }
+      s.disabled = false; render();
+    });
+    return s;
+  }
+
+  async function saveRow(r, extra){
+    const p = priv.get(r.id) || { price:null, note:'' };
+    const payload = { id:r.id, num:r.num, name:r.name, status:r.status, topic:r.topic, paid:!!r.paid, referral:!!r.referral,
+                      price: p.price == null ? '' : String(p.price), note: p.note || '' };
+    Object.assign(payload, extra || {});
+    const id = await rpc('ref_save_row', { p: payload });
+    return id;
+  }
+
+  function render(){
+    // stats
+    const box = $('#stats'); box.replaceChildren();
+    const tile = (parent, n, label, cls) => { const d = el('div','stat'+(cls?' '+cls:'')+(n===0?' zero':'')); d.appendChild(el('b',null,n)); d.appendChild(el('span',null,label)); parent.appendChild(d); };
+    tile(box, rows.length, 'всего работ');
+    const extra = [...new Set(rows.map(r=>r.status).filter(x => x && !stNames().includes(x)))];
+    for (const s of statuses) tile(box, rows.filter(r=>r.status===s.name).length, s.name.toLowerCase(), 't-'+s.color);
+    for (const x of extra) tile(box, rows.filter(r=>r.status===x).length, x.toLowerCase(), 't-gray');
+
+    // money
+    const money = $('#money'); money.replaceChildren();
+    if (edit){
+      let total=0, got=0, wait=0;
+      for (const r of rows){ const p = priv.get(r.id); const v = p && p.price ? p.price : 0; total += v; if (r.paid) got += v; else wait += v; }
+      tile(money, fmt(total)+' ₽', 'сумма всех работ', 't-blue');
+      tile(money, fmt(got)+' ₽', 'получено', 't-green');
+      tile(money, fmt(wait)+' ₽', 'ещё должны', 't-red');
+      tile(money, rows.filter(r=>r.referral).length, 'рефералов', 't-purple');
+    }
+
+    // filters
+    const fs = $('#fStatus'), cur = fs.value;
+    fillSelect(fs, [['', 'Все статусы'], ...[...stNames(), ...extra].map(n=>[n,n])]);
+    fs.value = [...stNames(), ...extra].includes(cur) ? cur : '';
+    const q = $('#q').value.trim().toLowerCase(), fp = $('#fPaid').value;
+    $('#thNum').textContent = '№ ' + (sortDesc ? '↓' : '↑');
+
+    const list = rows.slice().sort((a,b) => sortDesc ? (b.num-a.num) : (a.num-b.num))
+      .filter(r => (!fs.value || r.status===fs.value) && (!fp || (fp==='1') === !!r.paid) &&
+                   (!q || (r.name||'').toLowerCase().includes(q) || (r.topic||'').toLowerCase().includes(q)));
+
+    const tb = $('#tbody'); tb.replaceChildren();
+    if (!loaded) return;
+    if (!rows.length) return setNote(edit ? 'Список пуст. Нажмите «+ Добавить».' : 'Список пока пуст.');
+    if (!list.length) return setNote('Ничего не найдено.');
+
+    for (const r of list){
+      const tr = el('tr');
+      tr.appendChild(el('td','num', r.num));
+      tr.appendChild(el('td','name', (r.name||'') + (r.referral ? ' *' : '')));
+      const st = el('td'), pd = el('td');
+      if (edit){
+        st.appendChild(inlineSelect('st-'+r.id, statusOptions(r.status), r.status, 'c-'+stColor(r.status), 'Статус: '+r.name,
+          async v => { await saveRow(Object.assign({}, r, {status:v})); r.status = v; toast('Статус: '+v); }));
+        pd.appendChild(inlineSelect('pd-'+r.id, [['1','Оплачено'],['0','Не оплачено']], r.paid?'1':'0', r.paid?'c-green':'c-red', 'Оплата: '+r.name,
+          async v => { await saveRow(Object.assign({}, r, {paid:v==='1'})); r.paid = v==='1'; toast(r.paid?'Оплачено':'Не оплачено'); }));
+      } else {
+        st.appendChild(el('span','pill c-'+stColor(r.status), r.status||'—'));
+        pd.appendChild(el('span','pill '+(r.paid?'c-green':'c-red'), r.paid?'Оплачено':'Не оплачено'));
+      }
+      tr.appendChild(st); tr.appendChild(pd);
+      if (edit){
+        const p = priv.get(r.id) || {price:null, note:''};
+        tr.appendChild(el('td','price', p.price==null ? '—' : fmt(p.price)));
+        tr.appendChild(el('td','pnote', p.note||''));
+        const rc = el('td');
+        rc.appendChild(inlineSelect('rf-'+r.id, [['1','Реферал'],['0','Не реферал']], r.referral?'1':'0', r.referral?'c-red':'c-green', 'Реферал: '+r.name,
+          async v => { await saveRow(Object.assign({}, r, {referral:v==='1'})); r.referral = v==='1'; toast(r.referral?'Реферал':'Не реферал'); }));
+        tr.appendChild(rc);
+        tr.tabIndex = 0;
+        tr.addEventListener('click', () => openRow(r.id));
+        tr.addEventListener('keydown', e => { if (e.key==='Enter') openRow(r.id); });
+      }
+      tr.appendChild(el('td','topic', r.topic||''));
+      tb.appendChild(tr);
+    }
+  }
+  $('#q').addEventListener('input', render);
+  $('#fStatus').addEventListener('change', render);
+  $('#fPaid').addEventListener('change', render);
+  $('#thNum').addEventListener('click', () => { sortDesc = !sortDesc; render(); });
+
+  // ---- edit mode ----
+  async function enterEdit(){
+    edit = true; document.body.classList.add('edit');
+    $('#editToggle').textContent = 'выйти из редактирования';
+    try { await loadPrivate(); } catch(e){}
+    render();
+  }
+  function leaveEdit(){
+    edit = false; pass = null; priv = new Map();
+    try { sessionStorage.removeItem('refPass'); } catch(e){}
+    document.body.classList.remove('edit');
+    $('#editToggle').textContent = 'редактирование таблицы';
+    render();
+  }
+  $('#editToggle').addEventListener('click', () => {
+    if (edit) return leaveEdit();
+    $('#iPass').value = ''; $('#passErr').textContent = '';
+    $('#dlgPass').showModal(); $('#iPass').focus();
+  });
+  $('#formPass').addEventListener('submit', async e => {
+    e.preventDefault();
+    const v = $('#iPass').value; $('#passOk').disabled = true; $('#passErr').textContent = '';
+    try {
+      const { data, error } = await sb.rpc('ref_check', { p_pass: v });
+      if (error) throw error;
+      if (!data){ $('#passErr').textContent = 'Неверный пароль.'; return; }
+      pass = v; try { sessionStorage.setItem('refPass', v); } catch(e){}
+      $('#dlgPass').close(); await enterEdit(); toast('Редактирование включено');
+    } catch(err){ $('#passErr').textContent = 'Не удалось проверить пароль. Проверьте интернет.'; }
+    finally { $('#passOk').disabled = false; }
+  });
+
+  // ---- row dialog ----
+  let editingId = null, delArmed = false;
+  function openRow(id){
+    editingId = id; delArmed = false; $('#delBtn').textContent = 'Удалить'; $('#rowErr').textContent = '';
+    const r = id ? rows.find(x=>x.id===id) : null, p = (id && priv.get(id)) || {price:null, note:''};
+    $('#rowTitle').textContent = r ? 'Изменить запись' : 'Новая запись';
+    $('#delBtn').style.visibility = r ? 'visible' : 'hidden';
+    $('#iNum').value = r ? r.num : Math.max(0, ...rows.map(x=>x.num||0)) + 1;
+    $('#iName').value = r ? r.name : '';
+    const defSt = stNames().includes('В работе') ? 'В работе' : (stNames()[0] || '');
+    fillSelect($('#iStatus'), statusOptions(r ? r.status : defSt), r ? r.status : defSt);
+    $('#iPaid').value = r && r.paid ? '1' : '0';
+    $('#iRef').value = r && r.referral ? '1' : '0';
+    $('#iPrice').value = p.price == null ? '' : p.price;
+    $('#iNote').value = p.note || '';
+    $('#iTopic').value = r ? r.topic : '';
+    $('#dlgRow').showModal(); (r ? $('#iStatus') : $('#iName')).focus();
+  }
+  $('#addBtn').addEventListener('click', () => openRow(null));
+  $('#formRow').addEventListener('submit', async e => {
+    e.preventDefault();
+    const payload = { id: editingId || '', num: Number($('#iNum').value)||0, name: $('#iName').value.trim(), status: $('#iStatus').value,
+      topic: $('#iTopic').value.trim(), paid: $('#iPaid').value==='1', referral: $('#iRef').value==='1',
+      price: $('#iPrice').value.trim(), note: $('#iNote').value.trim() };
+    if (!payload.name || !payload.topic){ $('#rowErr').textContent = 'Заполните ФИО и тему.'; return; }
+    $('#rowSave').disabled = true;
+    try { await rpc('ref_save_row', { p: payload }); $('#dlgRow').close(); toast('Сохранено'); await reload(); }
+    catch(err){ $('#rowErr').textContent = 'Не удалось сохранить. Попробуйте ещё раз.'; }
+    finally { $('#rowSave').disabled = false; }
+  });
+  $('#delBtn').addEventListener('click', async () => {
+    if (!editingId) return;
+    if (!delArmed){ delArmed = true; $('#delBtn').textContent = 'Точно удалить?'; return; }
+    try { await rpc('ref_delete_row', { p_id: editingId }); $('#dlgRow').close(); toast('Запись удалена'); await reload(); }
+    catch(err){ $('#rowErr').textContent = 'Не удалось удалить.'; }
+  });
+
+  // ---- statuses dialog ----
+  function renderStatuses(){
+    const box = $('#stList'); box.replaceChildren();
+    statuses.forEach((s, i) => {
+      const item = el('div','st-item');
+      const moves = el('div','moves');
+      const up = el('button','small','▲'), down = el('button','small','▼');
+      up.type = down.type = 'button'; up.title = 'Выше'; down.title = 'Ниже';
+      up.disabled = i===0; down.disabled = i===statuses.length-1;
+      up.addEventListener('click', () => moveStatus(i, -1)); down.addEventListener('click', () => moveStatus(i, 1));
+      moves.append(up, down);
+      const name = el('input'); name.value = s.name; name.id = 'stn-'+s.id; name.setAttribute('aria-label','Название статуса');
+      const color = el('select','c-'+s.color); color.id = 'stc-'+s.id; color.setAttribute('aria-label','Цвет');
+      fillSelect(color, COLORS, s.color);
+      color.addEventListener('change', () => { color.className = 'c-'+color.value; });
+      const btns = el('div','btns');
+      const save = el('button','small primary','Сохранить'); save.type='button';
+      const del = el('button','small danger','Удалить'); del.type='button';
+      save.addEventListener('click', async () => {
+        const nn = name.value.trim(); if (!nn){ $('#stErr').textContent='Название не может быть пустым.'; return; }
+        if (statuses.some(x => x.id!==s.id && x.name===nn)){ $('#stErr').textContent='Такой статус уже есть.'; return; }
+        save.disabled = true;
+        try { await rpc('ref_save_status', { p_id: s.id, p_name: nn, p_color: color.value, p_sort: s.sort }); await reload(); renderStatuses(); toast('Статус сохранён'); $('#stErr').textContent=''; }
+        catch(e){ $('#stErr').textContent='Не удалось сохранить статус.'; save.disabled=false; }
+      });
+      del.addEventListener('click', () => {
+        if (item.querySelector('.st-del')) return;
+        const used = rows.filter(r=>r.status===s.name).length;
+        const row = el('div','st-del');
+        row.appendChild(el('span', null, used ? `У ${used} записей этот статус. Перевести их в:` : 'Удалить этот статус?'));
+        let mv = null;
+        if (used){
+          mv = el('select'); mv.id = 'stmv-'+s.id; mv.setAttribute('aria-label','Новый статус для записей');
+          fillSelect(mv, statuses.filter(x=>x.id!==s.id).map(x=>[x.name,x.name]));
+          if (!mv.options.length){ row.appendChild(el('span',null,'— сначала создайте другой статус.')); item.appendChild(row); return; }
+          row.appendChild(mv);
+        }
+        const yes = el('button','small danger','Удалить'); yes.type='button';
+        const no = el('button','small','Отмена'); no.type='button';
+        no.addEventListener('click', () => row.remove());
+        yes.addEventListener('click', async () => {
+          yes.disabled = true;
+          try { await rpc('ref_delete_status', { p_id: s.id, p_move_to: mv ? mv.value : null }); await reload(); renderStatuses(); toast('Статус удалён'); }
+          catch(e){ $('#stErr').textContent='Не удалось удалить статус.'; yes.disabled=false; }
+        });
+        row.append(yes, no); item.appendChild(row);
+      });
+      btns.append(save, del);
+      item.append(moves, name, color, btns);
+      box.appendChild(item);
+    });
+  }
+  async function moveStatus(i, d){
+    const a = statuses[i], b = statuses[i+d]; if (!a || !b) return;
+    const order = statuses.slice(); order[i] = b; order[i+d] = a;
+    try {
+      for (let k=0; k<order.length; k++){
+        if (order[k].sort !== k+1) await rpc('ref_save_status', { p_id: order[k].id, p_name: order[k].name, p_color: order[k].color, p_sort: k+1 });
+      }
+      await reload(); renderStatuses();
+    } catch(e){ $('#stErr').textContent='Не удалось изменить порядок.'; }
+  }
+  $('#statusesBtn').addEventListener('click', () => {
+    $('#stErr').textContent=''; fillSelect($('#newStColor'), COLORS, 'blue'); $('#newStColor').className='c-blue';
+    renderStatuses(); $('#dlgSt').showModal();
+  });
+  $('#newStColor').addEventListener('change', e => { e.target.className = 'c-'+e.target.value; });
+  $('#newStAdd').addEventListener('click', async () => {
+    const n = $('#newStName').value.trim();
+    if (!n){ $('#stErr').textContent='Введите название статуса.'; return; }
+    if (stNames().includes(n)){ $('#stErr').textContent='Такой статус уже есть.'; return; }
+    try {
+      await rpc('ref_save_status', { p_id: null, p_name: n, p_color: $('#newStColor').value, p_sort: Math.max(0, ...statuses.map(s=>s.sort||0)) + 1 });
+      $('#newStName').value=''; $('#stErr').textContent=''; await reload(); renderStatuses(); toast('Статус добавлен');
+    } catch(e){ $('#stErr').textContent='Не удалось добавить статус.'; }
+  });
+
+  // ---- CSV ----
+  $('#csvBtn').addEventListener('click', () => {
+    const esc = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+    const head = ['№','ФИО','Статус','Оплата','Цена','Примечание','Реферал','Тема'];
+    const lines = [head.map(esc).join(';')];
+    for (const r of rows.slice().sort((a,b)=>a.num-b.num)){
+      const p = priv.get(r.id) || {};
+      lines.push([r.num, r.name, r.status, r.paid?'Оплачено':'Не оплачено', p.price==null?'':p.price, p.note||'', r.referral?'Да':'Нет', r.topic].map(esc).join(';'));
+    }
+    const blob = new Blob(['﻿' + lines.join('\r\n')], { type:'text/csv;charset=utf-8' });
+    const a = el('a'); a.href = URL.createObjectURL(blob); a.download = 'referaty.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  });
+
+  // ---- password change ----
+  $('#passBtn').addEventListener('click', () => { $('#iNewPass').value=''; $('#iNewPass2').value=''; $('#npErr').textContent=''; $('#dlgNewPass').showModal(); $('#iNewPass').focus(); });
+  $('#formNewPass').addEventListener('submit', async e => {
+    e.preventDefault();
+    const a = $('#iNewPass').value, b = $('#iNewPass2').value;
+    if (a !== b){ $('#npErr').textContent='Пароли не совпадают.'; return; }
+    try { await rpc('ref_change_pass', { p_new: a }); pass = a; try{ sessionStorage.setItem('refPass', a); }catch(e){} $('#dlgNewPass').close(); toast('Пароль изменён'); }
+    catch(err){ $('#npErr').textContent='Не удалось сменить пароль.'; }
+  });
+
+  // ---- start ----
+  (async () => {
+    await reload();
+    if (pass){
+      try { const { data } = await sb.rpc('ref_check', { p_pass: pass }); if (data) await enterEdit(); else leaveEdit(); } catch(e){}
+    }
+    setInterval(() => { if (!document.hidden && !document.querySelector('dialog[open]')) reload(); }, 30000);
+  })();
+})();
+</script>
+</body>
+</html>
